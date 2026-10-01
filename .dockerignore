@@ -1,0 +1,12 @@
+**
+!requirements.lock
+!pyproject.toml
+!README.md
+!LICENSE
+!NOTICE.md
+!manage.py
+!bench/
+!bench/**
+bench/**/__pycache__/
+!infra/
+!infra/**

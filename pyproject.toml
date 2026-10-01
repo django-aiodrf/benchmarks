@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aiodrf-benchmarks"
+version = "0.1.0"
+description = "Reproducible HTTP benchmarks of Python API frameworks on Django: SQL, MongoDB, Elasticsearch, cache, HTTP and streaming workloads."
+readme = "README.md"
+requires-python = ">=3.14"
+license = "BSD-3-Clause"
+keywords = ["django", "benchmark", "django-rest-framework", "aiodrf", "asgi"]
+# Lower bounds are the versions measured; requirements.lock pins every
+# package of a run exactly.
+dependencies = [
+  # Frameworks under test
+  "django>=6.1.1,<6.2",
+  "django-aiodrf[msgspec]>=0.0.1",
+  "djangorestframework>=3.18.1,<4",
+  "adrf>=0.1.14,<1",
+  "django-ninja>=1.7.1,<2",
+  "django-bolt>=0.11.1,<1",
+  "fastapi>=0.142.2,<1",
+  "litestar>=2.24,<3",
+  # Servers
+  "uvicorn[standard]>=0.54",
+  "granian>=2.8.4,<3",
+  "gunicorn>=26.2",
+  "gevent>=26.9",
+  "uvloop>=0.22.1",
+  # Service clients and Django integrations
+  "psycopg[binary,pool]>=3.3.6",
+  "django-mongodb-backend>=6.1,<6.2",
+  "pymongo>=4.18.2,<5",
+  "django-elasticsearch-dsl>=9.0,<10",
+  # django-elasticsearch-dsl 9.0 prepares empty documents with the 9.1+
+  # clients (tests/test_services.py::test_django_elasticsearch_document_preserves_all_model_fields).
+  "elasticsearch[async]>=9.0.5,<9.1",
+  "django-valkey>=0.4.1,<0.5",
+  "redis>=8.1",
+  "httpx>=0.28.1,<1",
+  "msgspec>=0.22",
+  "pydantic>=2.13.5,<3",
+  "pyjwt>=2.15.1,<3",
+  # Reports
+  "matplotlib>=3.11.2,<4",
+  "psutil>=7.2.2,<8",
+]
+
+[project.urls]
+Homepage = "https://github.com/django-aiodrf/benchmarks"
+Report = "https://github.com/django-aiodrf/benchmarks/blob/main/REPORT.md"
+Issues = "https://github.com/django-aiodrf/benchmarks/issues"
+aiodrf = "https://github.com/django-aiodrf/django-aiodrf"
+
+[dependency-groups]
+dev = ["pytest>=9.1", "pytest-django>=4.14", "ruff>=0.16"]
+
+[project.scripts]
+aiodrf-bench = "bench.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["bench"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ", "ASYNC", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "bench.settings"
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "--strict-markers --confcutdir=."
+filterwarnings = ["error"]
+markers = ["http: real server contract checks; enable with BENCH_HTTP_TESTS=1"]
