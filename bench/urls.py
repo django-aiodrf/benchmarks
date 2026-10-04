@@ -47,7 +47,12 @@ elif profile in ("django", "django-sync"):
 else:
     # DRF, adrf and aiodrf: class-based views of the same names.
     adapter = import_module(
-        "bench.adapters." + ("aiodrf" if profile.startswith("aiodrf") else profile)
+        "bench.adapters."
+        + (
+            "aiodrf"
+            if profile.startswith("aiodrf")
+            else profile.removesuffix("-fastdrf")
+        )
     )
 
     def view(name):

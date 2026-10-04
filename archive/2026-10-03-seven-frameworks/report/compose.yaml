@@ -1,0 +1,96 @@
+# Benchmark services. Each runs on its own CPUs (cpuset), apart from the
+# framework under test and the load generator; see docs/infrastructure.md.
+# Write durability waits (fsync per commit or write) are disabled so that the
+# write workloads measure the frameworks, not the disk.
+services:
+  postgres:
+    image: postgres:18.6-bookworm
+    environment:
+      POSTGRES_DB: aiodrf_benchmarks
+      POSTGRES_USER: bench
+      POSTGRES_PASSWORD: benchmark-local-only
+    ports:
+      - "127.0.0.1:${BENCH_PG_PORT:-55441}:5432"
+    volumes: ["postgres18:/var/lib/postgresql"]
+    shm_size: 1gb
+    cpuset: "${BENCH_PG_CPUS:-16-17}"
+    mem_limit: 4g
+    command: ["postgres", "-c", "shared_buffers=512MB", "-c", "effective_cache_size=3GB", "-c", "work_mem=8MB", "-c", "maintenance_work_mem=256MB", "-c", "max_connections=400", "-c", "effective_io_concurrency=64", "-c", "maintenance_io_concurrency=32", "-c", "io_method=${BENCH_PG_IO_METHOD:-worker}", "-c", "io_workers=4", "-c", "random_page_cost=1.1", "-c", "max_wal_size=2GB", "-c", "checkpoint_completion_target=0.9", "-c", "fsync=on", "-c", "synchronous_commit=off"]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U bench -d aiodrf_benchmarks"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  mongodb:
+    image: mongo:8.0.4
+    ports: ["127.0.0.1:${BENCH_MONGO_PORT:-57027}:27017"]
+    volumes: ["mongodb804:/data/db"]
+    cpuset: "${BENCH_MONGO_CPUS:-22-26}"
+    mem_limit: 2g
+    command: ["mongod", "--bind_ip_all", "--wiredTigerCacheSizeGB", "0.5"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.adminCommand({ping:1}).ok ? 0 : 1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.4
+    ports: ["127.0.0.1:${BENCH_ES_PORT:-59200}:9200"]
+    volumes: ["elasticsearch:/usr/share/elasticsearch/data"]
+    cpuset: "${BENCH_ES_CPUS:-18-21}"
+    mem_limit: 4g
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.ml.enabled: "false"
+      ES_JAVA_OPTS: -Xms2g -Xmx2g
+    ulimits:
+      nofile: {soft: 65535, hard: 65535}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=2s' >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+  http:
+    build: {context: ., dockerfile: infra/http.Dockerfile}
+    ports: ["127.0.0.1:${BENCH_HTTP_PORT:-58090}:8090"]
+    cpuset: "${BENCH_HTTP_CPUS:-27}"
+    mem_limit: 256m
+    environment:
+      BENCH_HTTP_DELAY_MS: ${BENCH_HTTP_DELAY_MS:-10}
+      GOMAXPROCS: "1"
+    healthcheck:
+      test: ["CMD", "/fixture", "-healthcheck"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  valkey:
+    image: valkey/valkey:9.0.6
+    ports: ["127.0.0.1:${BENCH_VALKEY_PORT:-56379}:6379"]
+    cpuset: "${BENCH_VALKEY_CPUS:-27}"
+    mem_limit: 2g
+    command: ["valkey-server", "--maxmemory", "1gb", "--maxmemory-policy", "allkeys-lru", "--io-threads", "1", "--tcp-backlog", "1024", "--tcp-keepalive", "60", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  pgbouncer:
+    image: ghcr.io/cloudnative-pg/pgbouncer:1.25.2-202609171356-trixie@sha256:dbca2dc60ea6405577d727c3287203c0db4c434571fd07b07f818a17e4be44f7
+    volumes:
+      - ./infra/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./infra/pgbouncer-users.txt:/etc/pgbouncer/pgbouncer-users.txt:ro
+    ports: ["127.0.0.1:${BENCH_PGBOUNCER_PORT:-56432}:6432"]
+    cpuset: "${BENCH_PGBOUNCER_CPUS:-27}"
+    mem_limit: 256m
+    depends_on:
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=benchmark-local-only psql -h 127.0.0.1 -p 6432 -U bench -d pgbouncer -c 'SHOW VERSION' >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+volumes:
+  postgres18:
+  mongodb804:
+  elasticsearch:

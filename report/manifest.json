@@ -21,7 +21,7 @@
     "work_mem": "8MB"
   },
   "dataset_size": 1000,
-  "finished_at": "2026-10-01T10:29:20.760183+00:00",
+  "finished_at": "2026-10-04T01:38:52.155626+00:00",
   "infrastructure_images": {
     "available": true,
     "containers": [
@@ -113,16 +113,15 @@
     "command": "run",
     "concurrency": 64,
     "cpus": 4,
-    "duration": 5,
+    "duration": 20,
     "frameworks": [
-      "aiodrf",
-      "aiodrf-tuned",
-      "adrf",
+      "fastapi",
+      "litestar",
       "ninja",
       "drf",
-      "django",
-      "django-sync",
-      "bolt"
+      "drf-fastdrf",
+      "aiodrf",
+      "aiodrf-fastdrf"
     ],
     "host": "127.0.0.1",
     "image": "aiodrf-benchmarks:local",
@@ -139,11 +138,11 @@
     "load_threads": 2,
     "memory": "2g",
     "mode": "baremetal",
-    "oha": "oha",
-    "output": "results/core-full-2026-10-01",
+    "oha": "/home/ctolon/.local/bin/oha",
+    "output": "results/comparison-20261004-servers",
     "port": 8100,
     "post_requests": 3000,
-    "repeats": 2,
+    "repeats": 3,
     "reset_database": true,
     "scenarios": [
       "json",
@@ -152,86 +151,180 @@
       "articles",
       "article-detail",
       "article-create",
-      "stream-1k",
-      "stream-10k",
       "jwt-article",
-      "jwt-articles",
-      "mongo-read",
-      "mongo-aggregate",
-      "mongo-write",
-      "mongo-native-read",
-      "mongo-native-aggregate",
-      "mongo-native-write",
-      "elasticsearch-search",
-      "elasticsearch-aggregate",
-      "elasticsearch-write",
-      "elasticsearch-native-search",
-      "elasticsearch-native-aggregate",
-      "elasticsearch-native-write",
-      "cache-read",
-      "cache-read-many",
-      "cache-write",
-      "cache-pipeline",
-      "db-cache-hit",
-      "db-cache-miss",
-      "articles-cache-hit",
-      "articles-cache-miss",
-      "http-single",
-      "http-no-reuse",
-      "http-fanout",
-      "mixed-inline",
-      "mixed-thread"
+      "jwt-articles"
     ],
     "seed": 42,
     "server_cpus": [
-      0,
-      2,
-      4,
-      6
+      0
     ],
     "servers": [
       "uvicorn",
-      "gunicorn-sync",
+      "granian-asgi",
       "gunicorn-gthread",
-      "bolt-native"
+      "granian-wsgi"
     ],
     "warmup": 2,
     "workers": [
-      1,
-      4
+      1
     ]
   },
   "pgbouncer": {},
+  "profile_settings": {
+    "aiodrf": {
+      "AIODRF": {},
+      "FASTDRF": {},
+      "REST_FRAMEWORK": {
+        "COERCE_BIGINT_TO_STRING": false,
+        "DEFAULT_AUTHENTICATION_CLASSES": [],
+        "DEFAULT_PARSER_CLASSES": [
+          "rest_framework.parsers.JSONParser"
+        ],
+        "DEFAULT_PERMISSION_CLASSES": [],
+        "DEFAULT_RENDERER_CLASSES": [
+          "rest_framework.renderers.JSONRenderer"
+        ],
+        "DEFAULT_THROTTLE_CLASSES": [],
+        "UNAUTHENTICATED_USER": null
+      },
+      "orm": "Django ORM (psycopg)",
+      "serializer_backend": "drf"
+    },
+    "aiodrf-fastdrf": {
+      "AIODRF": {
+        "REPRESENTATION_MODE": "inline",
+        "REQUEST_THREADS": 32
+      },
+      "FASTDRF": {
+        "CACHE_SERIALIZER_FIELDS": true,
+        "DELEGATE_FIELDS": true,
+        "FIELD_COPY_MODE": "compiled",
+        "SERIALIZER_BACKEND": "msgspec",
+        "SERIALIZER_BACKEND_FALLBACK": "drf",
+        "SERIALIZER_BACKEND_PARITY": "strict"
+      },
+      "REST_FRAMEWORK": {
+        "COERCE_BIGINT_TO_STRING": false,
+        "DEFAULT_AUTHENTICATION_CLASSES": [],
+        "DEFAULT_PARSER_CLASSES": [
+          "fastdrf.msgspec.parsers.MsgspecJSONParser"
+        ],
+        "DEFAULT_PERMISSION_CLASSES": [],
+        "DEFAULT_RENDERER_CLASSES": [
+          "fastdrf.msgspec.renderers.MsgspecJSONRenderer"
+        ],
+        "DEFAULT_THROTTLE_CLASSES": [],
+        "UNAUTHENTICATED_USER": null
+      },
+      "orm": "Django ORM (psycopg)",
+      "serializer_backend": "msgspec"
+    },
+    "drf": {
+      "AIODRF": {},
+      "FASTDRF": {},
+      "REST_FRAMEWORK": {
+        "COERCE_BIGINT_TO_STRING": false,
+        "DEFAULT_AUTHENTICATION_CLASSES": [],
+        "DEFAULT_PARSER_CLASSES": [
+          "rest_framework.parsers.JSONParser"
+        ],
+        "DEFAULT_PERMISSION_CLASSES": [],
+        "DEFAULT_RENDERER_CLASSES": [
+          "rest_framework.renderers.JSONRenderer"
+        ],
+        "DEFAULT_THROTTLE_CLASSES": [],
+        "UNAUTHENTICATED_USER": null
+      },
+      "orm": "Django ORM (psycopg)",
+      "serializer_backend": "drf"
+    },
+    "drf-fastdrf": {
+      "AIODRF": {},
+      "FASTDRF": {
+        "CACHE_SERIALIZER_FIELDS": true,
+        "DELEGATE_FIELDS": true,
+        "FIELD_COPY_MODE": "compiled",
+        "SERIALIZER_BACKEND": "msgspec",
+        "SERIALIZER_BACKEND_FALLBACK": "drf",
+        "SERIALIZER_BACKEND_PARITY": "strict"
+      },
+      "REST_FRAMEWORK": {
+        "COERCE_BIGINT_TO_STRING": false,
+        "DEFAULT_AUTHENTICATION_CLASSES": [],
+        "DEFAULT_PARSER_CLASSES": [
+          "fastdrf.msgspec.parsers.MsgspecJSONParser"
+        ],
+        "DEFAULT_PERMISSION_CLASSES": [],
+        "DEFAULT_RENDERER_CLASSES": [
+          "fastdrf.msgspec.renderers.MsgspecJSONRenderer"
+        ],
+        "DEFAULT_THROTTLE_CLASSES": [],
+        "UNAUTHENTICATED_USER": null
+      },
+      "orm": "Django ORM (psycopg)",
+      "serializer_backend": "msgspec"
+    },
+    "fastapi": {
+      "AIODRF": {},
+      "FASTDRF": {},
+      "REST_FRAMEWORK": {
+        "COERCE_BIGINT_TO_STRING": false,
+        "DEFAULT_AUTHENTICATION_CLASSES": [],
+        "DEFAULT_PARSER_CLASSES": [
+          "rest_framework.parsers.JSONParser"
+        ],
+        "DEFAULT_PERMISSION_CLASSES": [],
+        "DEFAULT_RENDERER_CLASSES": [
+          "rest_framework.renderers.JSONRenderer"
+        ],
+        "DEFAULT_THROTTLE_CLASSES": [],
+        "UNAUTHENTICATED_USER": null
+      },
+      "orm": "SQLAlchemy async (psycopg)",
+      "serializer_backend": "drf"
+    },
+    "litestar": {
+      "AIODRF": {},
+      "FASTDRF": {},
+      "REST_FRAMEWORK": {
+        "COERCE_BIGINT_TO_STRING": false,
+        "DEFAULT_AUTHENTICATION_CLASSES": [],
+        "DEFAULT_PARSER_CLASSES": [
+          "rest_framework.parsers.JSONParser"
+        ],
+        "DEFAULT_PERMISSION_CLASSES": [],
+        "DEFAULT_RENDERER_CLASSES": [
+          "rest_framework.renderers.JSONRenderer"
+        ],
+        "DEFAULT_THROTTLE_CLASSES": [],
+        "UNAUTHENTICATED_USER": null
+      },
+      "orm": "SQLAlchemy async (psycopg)",
+      "serializer_backend": "drf"
+    },
+    "ninja": {
+      "AIODRF": {},
+      "FASTDRF": {},
+      "REST_FRAMEWORK": {
+        "COERCE_BIGINT_TO_STRING": false,
+        "DEFAULT_AUTHENTICATION_CLASSES": [],
+        "DEFAULT_PARSER_CLASSES": [
+          "rest_framework.parsers.JSONParser"
+        ],
+        "DEFAULT_PERMISSION_CLASSES": [],
+        "DEFAULT_RENDERER_CLASSES": [
+          "rest_framework.renderers.JSONRenderer"
+        ],
+        "DEFAULT_THROTTLE_CLASSES": [],
+        "UNAUTHENTICATED_USER": null
+      },
+      "orm": "Django ORM (psycopg)",
+      "serializer_backend": "drf"
+    }
+  },
   "runner_environment": {
     "cpu_affinity": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27
+      18
     ],
     "cpu_count": 28,
     "cpu_governor": "powersave",
@@ -245,8 +338,12 @@
         "version": "0.1.14"
       },
       {
+        "name": "aiodrf-asgi-lifespan",
+        "version": "0.1.1"
+      },
+      {
         "name": "aiodrf-benchmarks",
-        "version": "0.0.1"
+        "version": "0.1.0"
       },
       {
         "name": "aiohappyeyeballs",
@@ -259,6 +356,10 @@
       {
         "name": "aiosignal",
         "version": "1.4.0"
+      },
+      {
+        "name": "aiosqlite",
+        "version": "0.22.1"
       },
       {
         "name": "annotated-doc",
@@ -306,7 +407,7 @@
       },
       {
         "name": "django-aiodrf",
-        "version": "0.0.1"
+        "version": "0.0.4"
       },
       {
         "name": "django-bolt",
@@ -315,6 +416,10 @@
       {
         "name": "django-elasticsearch-dsl",
         "version": "9.0"
+      },
+      {
+        "name": "django-fastdrf",
+        "version": "0.5.0"
       },
       {
         "name": "django-mongodb-backend",
@@ -481,10 +586,6 @@
         "version": "3.3.3"
       },
       {
-        "name": "py-spy",
-        "version": "0.4.2"
-      },
-      {
         "name": "pydantic",
         "version": "2.13.5"
       },
@@ -542,7 +643,7 @@
       },
       {
         "name": "ruff",
-        "version": "0.16.9"
+        "version": "0.16.10"
       },
       {
         "name": "six",
@@ -551,6 +652,10 @@
       {
         "name": "sniffio",
         "version": "1.3.1"
+      },
+      {
+        "name": "SQLAlchemy",
+        "version": "2.1.3"
       },
       {
         "name": "sqlparse",
@@ -610,22 +715,52 @@
     "sources": {
       "aiodrf": {
         "git_dirty": false,
-        "git_head": "ae17b9b2278a5ddb91ddf4bac4242ea22d1014ce",
-        "path": ".venv/lib/python3.14/site-packages/aiodrf",
-        "python_sha256": "250a57a7b35b8fb3436fa0e6daf1207492943a3c505ad9fda7bfae2ae8577638"
+        "git_head": "a159adbd83fa3cd259b470483552854a3b5ea211",
+        "path": "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/lib/python3.14/site-packages/aiodrf",
+        "python_sha256": "f6a72037c3adc10659af7e9c1b1b8323658dcac9eaf27daba140f4b17d79a775"
       },
       "benchmark": {
+        "git_dirty": true,
+        "git_head": "a159adbd83fa3cd259b470483552854a3b5ea211",
+        "path": "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/bench",
+        "python_sha256": "0ba778f582ca57d203f9bcf58f74514c8de9c10d72ce9a5ce4395c164d2e8d38"
+      },
+      "fastdrf": {
         "git_dirty": false,
-        "git_head": "ae17b9b2278a5ddb91ddf4bac4242ea22d1014ce",
-        "path": "bench",
-        "python_sha256": "433e44f750c571169b583a8cbcd42b457b0f417d4179040402c611d1356a644f"
+        "git_head": "a159adbd83fa3cd259b470483552854a3b5ea211",
+        "path": "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/lib/python3.14/site-packages/fastdrf",
+        "python_sha256": "63f32eee6b294c0404b8e9b01af5c299d11097aec6c2f851b444d278e918205c"
       }
     }
   },
   "schema_version": 5,
   "server_commands": {
-    "adrf-uvicorn-w1": [
-      ".venv/bin/python",
+    "aiodrf-fastdrf-granian-asgi-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
+      "-m",
+      "granian",
+      "--interface",
+      "asgi",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8100",
+      "--workers",
+      "1",
+      "--loop",
+      "uvloop",
+      "--http",
+      "1",
+      "--no-ws",
+      "--http1-keep-alive",
+      "--no-http1-pipeline-flush",
+      "--no-access-log",
+      "--log-level",
+      "warning",
+      "bench.asgi:application"
+    ],
+    "aiodrf-fastdrf-uvicorn-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
       "-m",
       "uvicorn",
       "bench.asgi:application",
@@ -651,38 +786,12 @@
       "--log-level",
       "warning"
     ],
-    "adrf-uvicorn-w4": [
-      ".venv/bin/python",
+    "aiodrf-granian-asgi-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
       "-m",
-      "uvicorn",
-      "bench.asgi:application",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "8100",
-      "--workers",
-      "4",
-      "--loop",
-      "uvloop",
-      "--http",
-      "httptools",
-      "--ws",
-      "none",
-      "--lifespan",
-      "on",
-      "--backlog",
-      "2048",
-      "--timeout-keep-alive",
-      "5",
-      "--no-access-log",
-      "--log-level",
-      "warning"
-    ],
-    "aiodrf-tuned-uvicorn-w1": [
-      ".venv/bin/python",
-      "-m",
-      "uvicorn",
-      "bench.asgi:application",
+      "granian",
+      "--interface",
+      "asgi",
       "--host",
       "127.0.0.1",
       "--port",
@@ -692,48 +801,17 @@
       "--loop",
       "uvloop",
       "--http",
-      "httptools",
-      "--ws",
-      "none",
-      "--lifespan",
-      "on",
-      "--backlog",
-      "2048",
-      "--timeout-keep-alive",
-      "5",
+      "1",
+      "--no-ws",
+      "--http1-keep-alive",
+      "--no-http1-pipeline-flush",
       "--no-access-log",
       "--log-level",
-      "warning"
-    ],
-    "aiodrf-tuned-uvicorn-w4": [
-      ".venv/bin/python",
-      "-m",
-      "uvicorn",
-      "bench.asgi:application",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "8100",
-      "--workers",
-      "4",
-      "--loop",
-      "uvloop",
-      "--http",
-      "httptools",
-      "--ws",
-      "none",
-      "--lifespan",
-      "on",
-      "--backlog",
-      "2048",
-      "--timeout-keep-alive",
-      "5",
-      "--no-access-log",
-      "--log-level",
-      "warning"
+      "warning",
+      "bench.asgi:application"
     ],
     "aiodrf-uvicorn-w1": [
-      ".venv/bin/python",
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
       "-m",
       "uvicorn",
       "bench.asgi:application",
@@ -759,59 +837,43 @@
       "--log-level",
       "warning"
     ],
-    "aiodrf-uvicorn-w4": [
-      ".venv/bin/python",
+    "drf-fastdrf-granian-wsgi-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
       "-m",
-      "uvicorn",
-      "bench.asgi:application",
+      "granian",
+      "--interface",
+      "wsgi",
       "--host",
       "127.0.0.1",
       "--port",
       "8100",
       "--workers",
-      "4",
+      "1",
       "--loop",
       "uvloop",
       "--http",
-      "httptools",
-      "--ws",
-      "none",
-      "--lifespan",
-      "on",
-      "--backlog",
-      "2048",
-      "--timeout-keep-alive",
-      "5",
+      "1",
+      "--no-ws",
+      "--http1-keep-alive",
+      "--no-http1-pipeline-flush",
       "--no-access-log",
       "--log-level",
-      "warning"
-    ],
-    "bolt-bolt-native-w1": [
-      ".venv/bin/python",
-      "manage.py",
-      "runbolt",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "8100",
-      "--processes",
+      "warning",
+      "--runtime-mode",
+      "mt",
+      "--runtime-threads",
       "1",
-      "--no-admin"
-    ],
-    "bolt-bolt-native-w4": [
-      ".venv/bin/python",
-      "manage.py",
-      "runbolt",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "8100",
-      "--processes",
+      "--blocking-threads",
       "4",
-      "--no-admin"
+      "--backpressure",
+      "128",
+      "--backlog",
+      "128",
+      "--factory",
+      "bench.wsgi:create_application"
     ],
-    "django-sync-gunicorn-gthread-w1": [
-      ".venv/bin/python",
+    "drf-fastdrf-gunicorn-gthread-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
       "-m",
       "gunicorn",
       "bench.wsgi:create_application()",
@@ -840,206 +902,43 @@
       "--config",
       "python:bench.gunicorn_config"
     ],
-    "django-sync-gunicorn-gthread-w4": [
-      ".venv/bin/python",
+    "drf-granian-wsgi-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
       "-m",
-      "gunicorn",
-      "bench.wsgi:create_application()",
-      "--bind",
-      "127.0.0.1:8100",
+      "granian",
+      "--interface",
+      "wsgi",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8100",
       "--workers",
-      "4",
-      "--worker-class",
-      "gthread",
-      "--threads",
-      "8",
-      "--worker-connections",
-      "256",
-      "--backlog",
-      "2048",
-      "--keep-alive",
-      "5",
-      "--timeout",
-      "60",
-      "--graceful-timeout",
-      "10",
+      "1",
+      "--loop",
+      "uvloop",
+      "--http",
+      "1",
+      "--no-ws",
+      "--http1-keep-alive",
+      "--no-http1-pipeline-flush",
+      "--no-access-log",
       "--log-level",
       "warning",
-      "--error-logfile",
-      "-",
-      "--config",
-      "python:bench.gunicorn_config"
-    ],
-    "django-sync-gunicorn-sync-w1": [
-      ".venv/bin/python",
-      "-m",
-      "gunicorn",
-      "bench.wsgi:create_application()",
-      "--bind",
-      "127.0.0.1:8100",
-      "--workers",
+      "--runtime-mode",
+      "mt",
+      "--runtime-threads",
       "1",
-      "--worker-class",
-      "sync",
-      "--threads",
-      "1",
-      "--worker-connections",
-      "256",
-      "--backlog",
-      "2048",
-      "--keep-alive",
-      "5",
-      "--timeout",
-      "60",
-      "--graceful-timeout",
-      "10",
-      "--log-level",
-      "warning",
-      "--error-logfile",
-      "-",
-      "--config",
-      "python:bench.gunicorn_config"
-    ],
-    "django-sync-gunicorn-sync-w4": [
-      ".venv/bin/python",
-      "-m",
-      "gunicorn",
-      "bench.wsgi:create_application()",
-      "--bind",
-      "127.0.0.1:8100",
-      "--workers",
+      "--blocking-threads",
       "4",
-      "--worker-class",
-      "sync",
-      "--threads",
-      "1",
-      "--worker-connections",
-      "256",
+      "--backpressure",
+      "128",
       "--backlog",
-      "2048",
-      "--keep-alive",
-      "5",
-      "--timeout",
-      "60",
-      "--graceful-timeout",
-      "10",
-      "--log-level",
-      "warning",
-      "--error-logfile",
-      "-",
-      "--config",
-      "python:bench.gunicorn_config"
-    ],
-    "django-sync-uvicorn-w1": [
-      ".venv/bin/python",
-      "-m",
-      "uvicorn",
-      "bench.asgi:application",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "8100",
-      "--workers",
-      "1",
-      "--loop",
-      "uvloop",
-      "--http",
-      "httptools",
-      "--ws",
-      "none",
-      "--lifespan",
-      "on",
-      "--backlog",
-      "2048",
-      "--timeout-keep-alive",
-      "5",
-      "--no-access-log",
-      "--log-level",
-      "warning"
-    ],
-    "django-sync-uvicorn-w4": [
-      ".venv/bin/python",
-      "-m",
-      "uvicorn",
-      "bench.asgi:application",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "8100",
-      "--workers",
-      "4",
-      "--loop",
-      "uvloop",
-      "--http",
-      "httptools",
-      "--ws",
-      "none",
-      "--lifespan",
-      "on",
-      "--backlog",
-      "2048",
-      "--timeout-keep-alive",
-      "5",
-      "--no-access-log",
-      "--log-level",
-      "warning"
-    ],
-    "django-uvicorn-w1": [
-      ".venv/bin/python",
-      "-m",
-      "uvicorn",
-      "bench.asgi:application",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "8100",
-      "--workers",
-      "1",
-      "--loop",
-      "uvloop",
-      "--http",
-      "httptools",
-      "--ws",
-      "none",
-      "--lifespan",
-      "on",
-      "--backlog",
-      "2048",
-      "--timeout-keep-alive",
-      "5",
-      "--no-access-log",
-      "--log-level",
-      "warning"
-    ],
-    "django-uvicorn-w4": [
-      ".venv/bin/python",
-      "-m",
-      "uvicorn",
-      "bench.asgi:application",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "8100",
-      "--workers",
-      "4",
-      "--loop",
-      "uvloop",
-      "--http",
-      "httptools",
-      "--ws",
-      "none",
-      "--lifespan",
-      "on",
-      "--backlog",
-      "2048",
-      "--timeout-keep-alive",
-      "5",
-      "--no-access-log",
-      "--log-level",
-      "warning"
+      "128",
+      "--factory",
+      "bench.wsgi:create_application"
     ],
     "drf-gunicorn-gthread-w1": [
-      ".venv/bin/python",
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
       "-m",
       "gunicorn",
       "bench.wsgi:create_application()",
@@ -1068,98 +967,32 @@
       "--config",
       "python:bench.gunicorn_config"
     ],
-    "drf-gunicorn-gthread-w4": [
-      ".venv/bin/python",
+    "fastapi-granian-asgi-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
       "-m",
-      "gunicorn",
-      "bench.wsgi:create_application()",
-      "--bind",
-      "127.0.0.1:8100",
-      "--workers",
-      "4",
-      "--worker-class",
-      "gthread",
-      "--threads",
-      "8",
-      "--worker-connections",
-      "256",
-      "--backlog",
-      "2048",
-      "--keep-alive",
-      "5",
-      "--timeout",
-      "60",
-      "--graceful-timeout",
-      "10",
-      "--log-level",
-      "warning",
-      "--error-logfile",
-      "-",
-      "--config",
-      "python:bench.gunicorn_config"
-    ],
-    "drf-gunicorn-sync-w1": [
-      ".venv/bin/python",
-      "-m",
-      "gunicorn",
-      "bench.wsgi:create_application()",
-      "--bind",
-      "127.0.0.1:8100",
+      "granian",
+      "--interface",
+      "asgi",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8100",
       "--workers",
       "1",
-      "--worker-class",
-      "sync",
-      "--threads",
+      "--loop",
+      "uvloop",
+      "--http",
       "1",
-      "--worker-connections",
-      "256",
-      "--backlog",
-      "2048",
-      "--keep-alive",
-      "5",
-      "--timeout",
-      "60",
-      "--graceful-timeout",
-      "10",
+      "--no-ws",
+      "--http1-keep-alive",
+      "--no-http1-pipeline-flush",
+      "--no-access-log",
       "--log-level",
       "warning",
-      "--error-logfile",
-      "-",
-      "--config",
-      "python:bench.gunicorn_config"
+      "bench.asgi:application"
     ],
-    "drf-gunicorn-sync-w4": [
-      ".venv/bin/python",
-      "-m",
-      "gunicorn",
-      "bench.wsgi:create_application()",
-      "--bind",
-      "127.0.0.1:8100",
-      "--workers",
-      "4",
-      "--worker-class",
-      "sync",
-      "--threads",
-      "1",
-      "--worker-connections",
-      "256",
-      "--backlog",
-      "2048",
-      "--keep-alive",
-      "5",
-      "--timeout",
-      "60",
-      "--graceful-timeout",
-      "10",
-      "--log-level",
-      "warning",
-      "--error-logfile",
-      "-",
-      "--config",
-      "python:bench.gunicorn_config"
-    ],
-    "ninja-uvicorn-w1": [
-      ".venv/bin/python",
+    "fastapi-uvicorn-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
       "-m",
       "uvicorn",
       "bench.asgi:application",
@@ -1185,8 +1018,32 @@
       "--log-level",
       "warning"
     ],
-    "ninja-uvicorn-w4": [
-      ".venv/bin/python",
+    "litestar-granian-asgi-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
+      "-m",
+      "granian",
+      "--interface",
+      "asgi",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8100",
+      "--workers",
+      "1",
+      "--loop",
+      "uvloop",
+      "--http",
+      "1",
+      "--no-ws",
+      "--http1-keep-alive",
+      "--no-http1-pipeline-flush",
+      "--no-access-log",
+      "--log-level",
+      "warning",
+      "bench.asgi:application"
+    ],
+    "litestar-uvicorn-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
       "-m",
       "uvicorn",
       "bench.asgi:application",
@@ -1195,7 +1052,58 @@
       "--port",
       "8100",
       "--workers",
-      "4",
+      "1",
+      "--loop",
+      "uvloop",
+      "--http",
+      "httptools",
+      "--ws",
+      "none",
+      "--lifespan",
+      "on",
+      "--backlog",
+      "2048",
+      "--timeout-keep-alive",
+      "5",
+      "--no-access-log",
+      "--log-level",
+      "warning"
+    ],
+    "ninja-granian-asgi-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
+      "-m",
+      "granian",
+      "--interface",
+      "asgi",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8100",
+      "--workers",
+      "1",
+      "--loop",
+      "uvloop",
+      "--http",
+      "1",
+      "--no-ws",
+      "--http1-keep-alive",
+      "--no-http1-pipeline-flush",
+      "--no-access-log",
+      "--log-level",
+      "warning",
+      "bench.asgi:application"
+    ],
+    "ninja-uvicorn-w1": [
+      "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/bin/python",
+      "-m",
+      "uvicorn",
+      "bench.asgi:application",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8100",
+      "--workers",
+      "1",
       "--loop",
       "uvloop",
       "--http",
@@ -1215,34 +1123,7 @@
   },
   "server_environment": {
     "cpu_affinity": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27
+      18
     ],
     "cpu_count": 28,
     "cpu_governor": "powersave",
@@ -1256,8 +1137,12 @@
         "version": "0.1.14"
       },
       {
+        "name": "aiodrf-asgi-lifespan",
+        "version": "0.1.1"
+      },
+      {
         "name": "aiodrf-benchmarks",
-        "version": "0.0.1"
+        "version": "0.1.0"
       },
       {
         "name": "aiohappyeyeballs",
@@ -1270,6 +1155,10 @@
       {
         "name": "aiosignal",
         "version": "1.4.0"
+      },
+      {
+        "name": "aiosqlite",
+        "version": "0.22.1"
       },
       {
         "name": "annotated-doc",
@@ -1317,7 +1206,7 @@
       },
       {
         "name": "django-aiodrf",
-        "version": "0.0.1"
+        "version": "0.0.4"
       },
       {
         "name": "django-bolt",
@@ -1326,6 +1215,10 @@
       {
         "name": "django-elasticsearch-dsl",
         "version": "9.0"
+      },
+      {
+        "name": "django-fastdrf",
+        "version": "0.5.0"
       },
       {
         "name": "django-mongodb-backend",
@@ -1492,10 +1385,6 @@
         "version": "3.3.3"
       },
       {
-        "name": "py-spy",
-        "version": "0.4.2"
-      },
-      {
         "name": "pydantic",
         "version": "2.13.5"
       },
@@ -1553,7 +1442,7 @@
       },
       {
         "name": "ruff",
-        "version": "0.16.9"
+        "version": "0.16.10"
       },
       {
         "name": "six",
@@ -1562,6 +1451,10 @@
       {
         "name": "sniffio",
         "version": "1.3.1"
+      },
+      {
+        "name": "SQLAlchemy",
+        "version": "2.1.3"
       },
       {
         "name": "sqlparse",
@@ -1621,168 +1514,35 @@
     "sources": {
       "aiodrf": {
         "git_dirty": false,
-        "git_head": "ae17b9b2278a5ddb91ddf4bac4242ea22d1014ce",
-        "path": ".venv/lib/python3.14/site-packages/aiodrf",
-        "python_sha256": "250a57a7b35b8fb3436fa0e6daf1207492943a3c505ad9fda7bfae2ae8577638"
+        "git_head": "a159adbd83fa3cd259b470483552854a3b5ea211",
+        "path": "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/lib/python3.14/site-packages/aiodrf",
+        "python_sha256": "f6a72037c3adc10659af7e9c1b1b8323658dcac9eaf27daba140f4b17d79a775"
       },
       "benchmark": {
+        "git_dirty": true,
+        "git_head": "a159adbd83fa3cd259b470483552854a3b5ea211",
+        "path": "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/bench",
+        "python_sha256": "0ba778f582ca57d203f9bcf58f74514c8de9c10d72ce9a5ce4395c164d2e8d38"
+      },
+      "fastdrf": {
         "git_dirty": false,
-        "git_head": "ae17b9b2278a5ddb91ddf4bac4242ea22d1014ce",
-        "path": "bench",
-        "python_sha256": "433e44f750c571169b583a8cbcd42b457b0f417d4179040402c611d1356a644f"
+        "git_head": "a159adbd83fa3cd259b470483552854a3b5ea211",
+        "path": "/home/ctolon/aiodrf/forks/aiodrf-benchmarks/.venv/lib/python3.14/site-packages/fastdrf",
+        "python_sha256": "63f32eee6b294c0404b8e9b01af5c299d11097aec6c2f851b444d278e918205c"
       }
     }
   },
-  "service_warmup": {
-    "elasticsearch-aggregate": 20000,
-    "elasticsearch-native-aggregate": 20000,
-    "elasticsearch-native-search": 20000,
-    "elasticsearch-native-write": 20000,
-    "elasticsearch-search": 20000,
-    "elasticsearch-write": 20000,
-    "mongo-aggregate": 20000,
-    "mongo-native-aggregate": 20000,
-    "mongo-native-read": 20000,
-    "mongo-native-write": 20000,
-    "mongo-read": 20000,
-    "mongo-write": 20000
-  },
+  "service_clients_enabled": false,
+  "service_warmup": {},
   "services": {
-    "dataset_sha256": "d66e22c2db7028c7ab9cb134e0655cdc8a005a6eed317914867d0963717ae39b",
-    "elasticsearch": {
-      "backend": "django_elasticsearch_dsl",
-      "index_settings": {
-        "aiodrf-benchmarks-documents": {
-          "settings": {
-            "index": {
-              "creation_date": "1790838356372",
-              "number_of_replicas": "0",
-              "number_of_shards": "1",
-              "provided_name": "aiodrf-benchmarks-documents",
-              "refresh_interval": "1s",
-              "routing": {
-                "allocation": {
-                  "include": {
-                    "_tier_preference": "data_content"
-                  }
-                }
-              },
-              "uuid": "vt_FoPK9QBmflGcIrMc84Q",
-              "version": {
-                "created": "9111000"
-              }
-            }
-          }
-        },
-        "aiodrf-benchmarks-writes": {
-          "settings": {
-            "index": {
-              "creation_date": "1790838356637",
-              "number_of_replicas": "0",
-              "number_of_shards": "1",
-              "provided_name": "aiodrf-benchmarks-writes",
-              "refresh_interval": "-1",
-              "routing": {
-                "allocation": {
-                  "include": {
-                    "_tier_preference": "data_content"
-                  }
-                }
-              },
-              "translog": {
-                "durability": "async",
-                "sync_interval": "5s"
-              },
-              "uuid": "TebjRu0JTii75khDpOM_Ug",
-              "version": {
-                "created": "9111000"
-              }
-            }
-          }
-        }
-      },
-      "version": "9.5.4"
-    },
-    "http": {
-      "connections_accepted": 39425,
-      "delay_ms": 10,
-      "go_version": "go1.27.1",
-      "implementation": "go-net-http",
-      "item_requests": 907198,
-      "payload_schema": 1,
-      "status": "ok"
-    },
-    "mongodb": {
-      "backend": "django_mongodb_backend",
-      "count": 200,
-      "indexes": {
-        "_id_": {
-          "key": [
-            [
-              "_id",
-              1
-            ]
-          ],
-          "v": 2
-        },
-        "category_identifier": {
-          "key": [
-            [
-              "category",
-              1
-            ],
-            [
-              "identifier",
-              1
-            ]
-          ],
-          "v": 2
-        },
-        "documents_identifier_362c5c66_uniq": {
-          "key": [
-            [
-              "identifier",
-              1
-            ]
-          ],
-          "partialFilterExpression": {
-            "identifier": {
-              "$gte": -9223372036854775808,
-              "$lte": 9223372036854775807
-            }
-          },
-          "unique": true,
-          "v": 2
-        }
-      },
-      "server_options": {
-        "net": {
-          "bindIp": "*"
-        },
-        "storage": {
-          "wiredTiger": {
-            "engineConfig": {
-              "cacheSizeGB": 0.5
-            }
-          }
-        }
-      },
-      "version": "8.0.4"
-    },
-    "valkey": {
-      "backend": "django_valkey.cache.ValkeyCache",
-      "config": {
-        "appendonly": "no",
-        "io-threads": "1",
-        "maxmemory": "1073741824",
-        "maxmemory-policy": "allkeys-lru",
-        "save": "",
-        "tcp-backlog": "1024"
-      },
-      "version": "9.0.6"
-    }
+    "dataset_sha256": "d66e22c2db7028c7ab9cb134e0655cdc8a005a6eed317914867d0963717ae39b"
   },
-  "started_at": "2026-10-01T07:05:55.048534+00:00",
+  "sqlalchemy_pool": {
+    "max_overflow": 0,
+    "pool_size": 10,
+    "pool_timeout": 10
+  },
+  "started_at": "2026-10-03T23:31:56.240287+00:00",
   "state": "complete",
   "workload": {
     "async_cache_backend": "django_valkey.async_cache.cache.AsyncValkeyCache",
@@ -1796,437 +1556,5 @@
     "mongo_native": "pymongo.AsyncMongoClient (sync profiles: MongoClient)",
     "search_backend": "django_elasticsearch_dsl",
     "search_native": "elasticsearch.dsl.AsyncSearch/async_bulk (sync profiles: Search/bulk)"
-  },
-  "corrections": [
-    {
-      "run": "core-full-2026-10-01-supplement",
-      "scenarios": [
-        "http-no-reuse",
-        "jwt-article"
-      ],
-      "reason": "In the first run, http-no-reuse exhausted the client's ephemeral ports: the application closed each connection to the HTTP fixture itself, leaving its port in TIME_WAIT, and the fixture requests failed once the range was used up. The requests now ask the fixture to close the connection. Django-Bolt's jwt-article timed out on the PostgreSQL pool: django-bolt 0.11.1 loads the user of `get_current_user` on an executor of up to 32 threads that each keep a pooled connection; the adapter now loads the user with Django's async ORM (docs/frameworks.md).",
-      "started_at": "2026-10-01T10:37:56.633187+00:00",
-      "finished_at": "2026-10-01T10:51:02.316746+00:00",
-      "server_environment": {
-        "cpu_affinity": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11,
-          12,
-          13,
-          14,
-          15,
-          16,
-          17,
-          18,
-          19,
-          20,
-          21,
-          22,
-          23,
-          24,
-          25,
-          26,
-          27
-        ],
-        "cpu_count": 28,
-        "cpu_governor": "powersave",
-        "cpu_model": "Intel(R) Core(TM) i7-14700F",
-        "gil_enabled": true,
-        "machine": "x86_64",
-        "memory_gib": 123.3,
-        "packages": [
-          {
-            "name": "adrf",
-            "version": "0.1.14"
-          },
-          {
-            "name": "aiodrf-benchmarks",
-            "version": "0.0.1"
-          },
-          {
-            "name": "aiohappyeyeballs",
-            "version": "2.7.1"
-          },
-          {
-            "name": "aiohttp",
-            "version": "3.14.3"
-          },
-          {
-            "name": "aiosignal",
-            "version": "1.4.0"
-          },
-          {
-            "name": "annotated-doc",
-            "version": "0.0.5"
-          },
-          {
-            "name": "annotated-types",
-            "version": "0.8.0"
-          },
-          {
-            "name": "anyio",
-            "version": "4.15.1"
-          },
-          {
-            "name": "asgiref",
-            "version": "3.12.1"
-          },
-          {
-            "name": "async-property",
-            "version": "0.2.2"
-          },
-          {
-            "name": "attrs",
-            "version": "26.1.0"
-          },
-          {
-            "name": "certifi",
-            "version": "2026.7.22"
-          },
-          {
-            "name": "click",
-            "version": "8.5.0"
-          },
-          {
-            "name": "contourpy",
-            "version": "1.4.0"
-          },
-          {
-            "name": "cycler",
-            "version": "0.12.1"
-          },
-          {
-            "name": "Django",
-            "version": "6.1.1"
-          },
-          {
-            "name": "django-aiodrf",
-            "version": "0.0.1"
-          },
-          {
-            "name": "django-bolt",
-            "version": "0.11.1"
-          },
-          {
-            "name": "django-elasticsearch-dsl",
-            "version": "9.0"
-          },
-          {
-            "name": "django-mongodb-backend",
-            "version": "6.1.0"
-          },
-          {
-            "name": "django-ninja",
-            "version": "1.7.1"
-          },
-          {
-            "name": "django-valkey",
-            "version": "0.4.1"
-          },
-          {
-            "name": "djangorestframework",
-            "version": "3.18.1"
-          },
-          {
-            "name": "dnspython",
-            "version": "2.8.0"
-          },
-          {
-            "name": "elastic-transport",
-            "version": "8.19.0"
-          },
-          {
-            "name": "elasticsearch",
-            "version": "9.0.5"
-          },
-          {
-            "name": "Faker",
-            "version": "40.40.0"
-          },
-          {
-            "name": "fastapi",
-            "version": "0.142.2"
-          },
-          {
-            "name": "fonttools",
-            "version": "4.66.1"
-          },
-          {
-            "name": "frozenlist",
-            "version": "1.8.0"
-          },
-          {
-            "name": "gevent",
-            "version": "26.9.0"
-          },
-          {
-            "name": "granian",
-            "version": "2.8.4"
-          },
-          {
-            "name": "greenlet",
-            "version": "3.5.6"
-          },
-          {
-            "name": "gunicorn",
-            "version": "26.2.0"
-          },
-          {
-            "name": "h11",
-            "version": "0.16.0"
-          },
-          {
-            "name": "httpcore",
-            "version": "1.0.9"
-          },
-          {
-            "name": "httptools",
-            "version": "0.8.0"
-          },
-          {
-            "name": "httpx",
-            "version": "0.28.1"
-          },
-          {
-            "name": "idna",
-            "version": "3.20"
-          },
-          {
-            "name": "iniconfig",
-            "version": "2.3.0"
-          },
-          {
-            "name": "kiwisolver",
-            "version": "1.5.1"
-          },
-          {
-            "name": "litestar",
-            "version": "2.24.0"
-          },
-          {
-            "name": "litestar-htmx",
-            "version": "0.5.0"
-          },
-          {
-            "name": "markdown-it-py",
-            "version": "4.2.0"
-          },
-          {
-            "name": "matplotlib",
-            "version": "3.11.2"
-          },
-          {
-            "name": "mdurl",
-            "version": "0.1.2"
-          },
-          {
-            "name": "msgspec",
-            "version": "0.22.0"
-          },
-          {
-            "name": "multidict",
-            "version": "6.9.1"
-          },
-          {
-            "name": "multipart",
-            "version": "2.0.1"
-          },
-          {
-            "name": "numpy",
-            "version": "2.5.3"
-          },
-          {
-            "name": "opentelemetry-api",
-            "version": "1.45.0"
-          },
-          {
-            "name": "packaging",
-            "version": "26.3"
-          },
-          {
-            "name": "pillow",
-            "version": "12.3.0"
-          },
-          {
-            "name": "pluggy",
-            "version": "1.6.0"
-          },
-          {
-            "name": "polyfactory",
-            "version": "3.3.0"
-          },
-          {
-            "name": "propcache",
-            "version": "0.5.4"
-          },
-          {
-            "name": "psutil",
-            "version": "7.2.2"
-          },
-          {
-            "name": "psycopg",
-            "version": "3.3.6"
-          },
-          {
-            "name": "psycopg-binary",
-            "version": "3.3.6"
-          },
-          {
-            "name": "psycopg-pool",
-            "version": "3.3.3"
-          },
-          {
-            "name": "py-spy",
-            "version": "0.4.2"
-          },
-          {
-            "name": "pydantic",
-            "version": "2.13.5"
-          },
-          {
-            "name": "pydantic_core",
-            "version": "2.46.5"
-          },
-          {
-            "name": "Pygments",
-            "version": "2.21.0"
-          },
-          {
-            "name": "PyJWT",
-            "version": "2.15.1"
-          },
-          {
-            "name": "pymongo",
-            "version": "4.18.2"
-          },
-          {
-            "name": "pyparsing",
-            "version": "3.3.3"
-          },
-          {
-            "name": "pytest",
-            "version": "9.1.1"
-          },
-          {
-            "name": "pytest-django",
-            "version": "4.14.0"
-          },
-          {
-            "name": "python-dateutil",
-            "version": "2.9.0.post0"
-          },
-          {
-            "name": "python-dotenv",
-            "version": "1.2.3"
-          },
-          {
-            "name": "PyYAML",
-            "version": "6.0.3"
-          },
-          {
-            "name": "redis",
-            "version": "8.1.0"
-          },
-          {
-            "name": "rich",
-            "version": "15.0.0"
-          },
-          {
-            "name": "rich-click",
-            "version": "1.9.9"
-          },
-          {
-            "name": "ruff",
-            "version": "0.16.9"
-          },
-          {
-            "name": "six",
-            "version": "1.17.0"
-          },
-          {
-            "name": "sniffio",
-            "version": "1.3.1"
-          },
-          {
-            "name": "sqlparse",
-            "version": "0.6.0"
-          },
-          {
-            "name": "starlette",
-            "version": "1.7.0"
-          },
-          {
-            "name": "typing-inspection",
-            "version": "0.4.4"
-          },
-          {
-            "name": "typing_extensions",
-            "version": "4.16.0"
-          },
-          {
-            "name": "urllib3",
-            "version": "2.8.0"
-          },
-          {
-            "name": "uvicorn",
-            "version": "0.54.0"
-          },
-          {
-            "name": "uvloop",
-            "version": "0.22.1"
-          },
-          {
-            "name": "valkey",
-            "version": "6.1.1"
-          },
-          {
-            "name": "watchfiles",
-            "version": "1.3.0"
-          },
-          {
-            "name": "websockets",
-            "version": "17.1"
-          },
-          {
-            "name": "yarl",
-            "version": "1.25.1"
-          },
-          {
-            "name": "zope.event",
-            "version": "6.2"
-          },
-          {
-            "name": "zope.interface",
-            "version": "8.6"
-          }
-        ],
-        "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.43",
-        "python": "3.14.7 (main, Sep  1 2026, 14:18:09) [Clang 22.1.3 ]",
-        "sources": {
-          "aiodrf": {
-            "git_dirty": false,
-            "git_head": "ae17b9b2278a5ddb91ddf4bac4242ea22d1014ce",
-            "path": ".venv/lib/python3.14/site-packages/aiodrf",
-            "python_sha256": "250a57a7b35b8fb3436fa0e6daf1207492943a3c505ad9fda7bfae2ae8577638"
-          },
-          "benchmark": {
-            "git_dirty": false,
-            "git_head": "ae17b9b2278a5ddb91ddf4bac4242ea22d1014ce",
-            "path": "bench",
-            "python_sha256": "f8c7f776cb0c3520af79868b1beb2c40d16c98d155b6b95208992a632cf682fb"
-          }
-        }
-      }
-    }
-  ]
+  }
 }

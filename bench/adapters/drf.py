@@ -1,5 +1,6 @@
 """Django REST framework: synchronous APIViews, served by the WSGI servers."""
 
+from django.conf import settings
 from django.http import Http404, StreamingHttpResponse
 from rest_framework import generics
 from rest_framework import serializers as serializer_module
@@ -26,6 +27,19 @@ from bench.profiles import (
     stream_items,
 )
 from bench.services import request_resources
+
+ListAPIView = generics.ListAPIView
+if settings.PROFILE == "drf-fastdrf":
+    from fastdrf import serializers as serializer_module
+    from fastdrf.response import DataResponse as Response
+    from fastdrf.views import DispatchOptimizationMixin
+
+    class APIView(DispatchOptimizationMixin, APIView):
+        pass
+
+    class ListAPIView(DispatchOptimizationMixin, generics.ListAPIView):
+        pass
+
 
 serializers = build_serializers(serializer_module)
 
@@ -116,7 +130,7 @@ class AuthenticatedArticleView(Authenticated, APIView):
         )
 
 
-class AuthenticatedArticlesView(Authenticated, generics.ListAPIView):
+class AuthenticatedArticlesView(Authenticated, ListAPIView):
     serializer_class = serializers.article
     pagination_class = ArticlePagination
 

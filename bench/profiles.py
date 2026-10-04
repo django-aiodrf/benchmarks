@@ -8,12 +8,14 @@
 INTERFACES = {
     "aiodrf": "asgi",
     "aiodrf-tuned": "asgi",
+    "aiodrf-fastdrf": "asgi",
     "adrf": "asgi",
     "ninja": "asgi",
     "django": "asgi",
     "fastapi": "asgi",
     "litestar": "asgi",
     "drf": "wsgi",
+    "drf-fastdrf": "wsgi",
     "django-sync": "wsgi",
     "bolt": "native",
 }
@@ -186,3 +188,14 @@ DESCRIPTIONS = {
     "mixed-inline": "The fanout, then pure-Python CPU work on the request's thread",
     "mixed-thread": "The fanout, then the same CPU work in a thread pool",
 }
+
+COMPARISON_PROFILES = (
+    "fastapi",
+    "litestar",
+    "ninja",
+    "drf",
+    "drf-fastdrf",
+    "aiodrf",
+    "aiodrf-fastdrf",
+)
+COMPARISON_SCENARIOS = CORE_SCENARIOS + AUTH_SCENARIOS

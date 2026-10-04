@@ -45,8 +45,8 @@ def operation(case):
     if case == "compiled-articles":
         from types import SimpleNamespace
 
-        from aiodrf.contrib.compiler import OutputField, OutputSpec
-        from aiodrf.contrib.msgspec.compiler import build
+        from fastdrf.compiler import OutputField, OutputSpec
+        from fastdrf.msgspec.compiler import build
 
         named = OutputSpec(
             "Named",

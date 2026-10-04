@@ -47,9 +47,11 @@ def create_application():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bench.settings")
     from django.conf import settings
 
-    if settings.PROFILE not in ("drf", "django-sync"):
+    if settings.PROFILE not in ("drf", "drf-fastdrf", "django-sync"):
         raise ValueError("WSGI benchmarks require drf or django-sync")
     wsgi_application = get_wsgi_application()
+    if os.environ.get("BENCH_SERVICE_CLIENTS", "1") == "0":
+        return wsgi_application
     restore_synchronous_cache_closing()
     application = WorkerApplication(wsgi_application)
     atexit.register(application.close)

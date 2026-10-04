@@ -22,12 +22,14 @@ FRAMEWORK_COLORS = dict(
         (
             "#1f5fa8",  # aiodrf
             "#5ba3e0",  # aiodrf-tuned
+            "#3d8be0",  # aiodrf-fastdrf
             "#8a5ca8",  # adrf
             "#2e9e6b",  # ninja
             "#c7472c",  # django
             "#1b9aaa",  # fastapi
             "#e0a526",  # litestar
             "#6b4226",  # drf
+            "#a66d47",  # drf-fastdrf
             "#e68a73",  # django-sync
             "#4a4a4a",  # bolt
         ),

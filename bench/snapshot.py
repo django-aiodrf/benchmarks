@@ -74,9 +74,10 @@ def _memory_gib() -> float | None:
 
 def snapshot() -> dict:
     sources = {"benchmark": source_record(Path(__file__).resolve().parent)}
-    spec = importlib.util.find_spec("aiodrf")
-    if spec is not None and spec.origin:
-        sources["aiodrf"] = source_record(Path(spec.origin).parent)
+    for package in ("aiodrf", "fastdrf"):
+        spec = importlib.util.find_spec(package)
+        if spec is not None and spec.origin:
+            sources[package] = source_record(Path(spec.origin).parent)
     return {
         "packages": sorted(
             (

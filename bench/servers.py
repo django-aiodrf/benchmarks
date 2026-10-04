@@ -124,22 +124,11 @@ def server_command(
             str(port),
             "--workers",
             str(workers),
-            "--runtime-mode",
-            "mt" if workers > 1 else "st",
-            "--runtime-threads",
-            "1",
-            # Granian's default number of runtime blocking threads:
-            # "--runtime-blocking-threads",
-            # "1",
             "--loop",
             "uvloop",
             "--http",
             "1",
             "--no-ws",
-            "--backlog",
-            "2048",
-            "--backpressure",
-            "256",
             "--http1-keep-alive",
             "--no-http1-pipeline-flush",
             "--no-access-log",
@@ -148,12 +137,22 @@ def server_command(
         ]
         if interface == "wsgi":
             return command + [
+                "--runtime-mode",
+                "mt",
+                "--runtime-threads",
+                "1",
                 "--blocking-threads",
-                "8",
+                "4",
+                "--backpressure",
+                "128",
+                "--backlog",
+                "128",
                 "--factory",
                 "bench.wsgi:create_application",
             ]
-        return command + ["--task-impl", "asyncio", "bench.asgi:application"]
+        # ASGI: uvloop with Granian's runtime, task and queue defaults.
+        # The WSGI thread/queue experiment does not apply to ASGI.
+        return command + ["bench.asgi:application"]
     worker = server.removeprefix("gunicorn-")
     return [
         sys.executable,

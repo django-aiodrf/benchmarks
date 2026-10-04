@@ -1,9 +1,10 @@
 # Frameworks
 
 Every framework answers the same URLs with the same response contract
-(`bench/verify.py`). Data access is shared: the article queries and the
-transactional insert are in `bench/domain.py`, the MongoDB, Elasticsearch,
-cache and HTTP operations in `bench/workloads.py`, `bench/native.py` and
+(`bench/verify.py`). Django profiles share their queries and transactional
+insert in `bench/domain.py`; FastAPI and Litestar use
+`bench/sqlalchemy_store.py`. The legacy MongoDB, Elasticsearch,
+cache and HTTP operations are in `bench/workloads.py`, `bench/native.py` and
 `bench/services.py`. What differs is what a framework does itself: routing,
 request parsing, validation, serialization, authentication, pagination,
 streaming and the response path. Each adapter uses the tools the framework
@@ -11,9 +12,9 @@ offers for these, in the way its documentation shows.
 
 | Profile | Adapter | Handlers |
 | --- | --- | --- |
-| `aiodrf`, `aiodrf-tuned` | `bench/adapters/aiodrf.py` | async `APIView`s and a generic `ListAPIView` |
+| `aiodrf`, `aiodrf-fastdrf`, `aiodrf-tuned` | `bench/adapters/aiodrf.py` | async `APIView`s and a generic `ListAPIView` |
 | `adrf` | `bench/adapters/adrf.py` | async `APIView`s and a generic `ListAPIView` |
-| `drf` | `bench/adapters/drf.py` | `APIView`s and a generic `ListAPIView` |
+| `drf`, `drf-fastdrf` | `bench/adapters/drf.py` | `APIView`s and a generic `ListAPIView` |
 | `ninja` | `bench/adapters/ninja.py` | async operations |
 | `django`, `django-sync` | `bench/adapters/django.py` | async and synchronous function views |
 | `fastapi` | `bench/adapters/fastapi.py` | async path operations |
@@ -25,7 +26,7 @@ offers for these, in the way its documentation shows.
 | Workload | DRF, adrf, aiodrf | Django Ninja | FastAPI | Litestar | Django Bolt | Plain Django |
 | --- | --- | --- | --- | --- | --- | --- |
 | JSON output | DRF `Response` and `JSONRenderer` | Pydantic response schema | Pydantic `response_model` | msgspec encoding of the returned value | msgspec encoding | `JsonResponse` |
-| SQL output | `ModelSerializer` with nested author and tag serializers | Pydantic schemas over a dict projection | Pydantic models over a dict projection | the dict projection | the dict projection | the dict projection |
+| SQL output | `ModelSerializer` with nested author and tag serializers | Pydantic schemas over a dict projection | Pydantic models over a dict projection | msgspec output structs | the dict projection | the dict projection |
 | Input validation (`article-create`) | a DRF `Serializer` | a Pydantic schema | a Pydantic model | a msgspec `Struct` | a msgspec `Struct` | hand-written checks |
 | JWT authentication | an authentication class with `IsAuthenticated` | an async `HttpBearer` | an `HTTPBearer` dependency | a dependency (`Provide`) | `JWTAuthentication` and `IsAuthenticated`, validated in Rust | the header, read in the view |
 | Pagination (`jwt-articles`) | `ListAPIView` with DRF's `PageNumberPagination` | `@paginate(PageNumberPagination)` | count and slice | `OffsetPagination` | count and slice | count and slice |
@@ -38,7 +39,7 @@ instances through its schema instead, as `@paginate` does.
 All profiles decode the token with the same key and algorithm (HS256, a
 fixed expiry) and load the user from PostgreSQL; Bolt validates the token with
 its own Rust implementation and loads the user with Django's async ORM, as
-the other asynchronous profiles do (see [Django Bolt](#django-bolt)). A
+the other Django-based asynchronous profiles do (see [Django Bolt](#django-bolt)). A
 missing or invalid token is a 401 everywhere.
 
 Service workloads (`mongo-*`, `elasticsearch-*`, `cache-*`, `*-cache-*`,
@@ -53,28 +54,35 @@ describes both families.
 ## aiodrf
 
 The `aiodrf` profile uses aiodrf with its defaults: DRF's serializers and
-`JSONRenderer`, awaited through `aiodrf.aio`. The `aiodrf-tuned` profile
+`JSONRenderer`, awaited through `aiodrf.aio`. The `aiodrf-fastdrf` profile (also available as `aiodrf-tuned`)
 enables aiodrf's opt-in fast paths, all of which keep DRF's output:
 
 ```python
-AIODRF = {
+FASTDRF = {
     "SERIALIZER_BACKEND": "msgspec",
     "SERIALIZER_BACKEND_PARITY": "strict",
-    "SERIALIZER_BACKEND_FALLBACK": "error",
+    "SERIALIZER_BACKEND_FALLBACK": "drf",
+    "DELEGATE_FIELDS": True,
     "CACHE_SERIALIZER_FIELDS": True,
     "FIELD_COPY_MODE": "compiled",
+}
+AIODRF = {
     "REPRESENTATION_MODE": "inline",
     "REQUEST_THREADS": 32,
 }
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
-    "aiodrf.contrib.msgspec.renderers.MsgspecJSONRenderer"
+    "fastdrf.msgspec.renderers.MsgspecJSONRenderer"
 ]
 ```
 
+The serializer settings are django-fastdrf's, which aiodrf builds on since
+0.0.3. `REQUEST_THREADS` needs aiodrf's `lifespan` extra.
+
 It also answers with `aiodrf.response.DataResponse` and is served by
 `aiodrf.asgi.get_asgi_application()`, which `REQUEST_THREADS` requires.
-`SERIALIZER_BACKEND_FALLBACK = "error"` makes a serializer that cannot be
-compiled fail the sample rather than silently fall back.
+Tests assert that the output model serializers compile. The plain input
+serializer may fall back to DRF. Both fastdrf profiles also select
+`fastdrf.msgspec.parsers.MsgspecJSONParser`.
 
 ## adrf and DRF
 
@@ -84,12 +92,15 @@ measured on WSGI servers, where it runs without thread adaptation.
 
 ## FastAPI and Litestar
 
-FastAPI and Litestar are not Django applications; like Django Ninja, they use
-the Django ORM here, through Django's async queryset API. `bench/asgi.py` wraps
-them to send Django's `request_started` and `request_finished` signals around
-each request, as Django's ASGI handler does, so that database connections are
-opened and returned the same way in every profile. Their typical stacks
-(SQLAlchemy, their own database integrations) are not measured.
+FastAPI uses Pydantic request/response models; Litestar uses msgspec structs.
+Both use SQLAlchemy async ORM with psycopg, a worker-owned engine and a
+request-scoped session. Their own lifespans dispose the engine. Neither runs
+Django request signals or Django ORM work during a measured endpoint.
+
+The [seven-profile comparison](comparison.md) documents query budgets, pool
+limits, transaction differences and the selected workloads. DRF-fastdrf uses
+fastdrf's serializer classes and DispatchOptimizationMixin, with DataResponse
+for unpaginated output. Its paginated ListAPIView retains a DRF Response.
 
 ## Django Bolt
 

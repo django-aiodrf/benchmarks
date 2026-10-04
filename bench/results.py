@@ -118,12 +118,15 @@ def aggregate(directory: Path) -> tuple[dict, list[dict]]:
 PACKAGES = (
     "Django",
     "django-aiodrf",
+    "django-fastdrf",
+    "aiodrf-asgi-lifespan",
     "djangorestframework",
     "adrf",
     "django-ninja",
     "django-bolt",
     "fastapi",
     "litestar",
+    "sqlalchemy",
     "pydantic",
     "msgspec",
     "uvicorn",
@@ -184,6 +187,32 @@ def _environment_lines(manifest: dict) -> list[str]:
                 f"- Source {name}: `{source.get('python_sha256', '')[:12]}` "
                 f"(commit {source.get('git_head') or 'none'}, working tree {state})"
             )
+    if manifest.get("profile_settings"):
+        lines += [
+            "",
+            "## Profile configuration",
+            "",
+            "| Profile | ORM | Serializer backend | AIODRF options |",
+            "| --- | --- | --- | --- |",
+        ]
+        for profile, config in manifest["profile_settings"].items():
+            backend = (
+                "Pydantic"
+                if profile == "fastapi"
+                else "msgspec Struct"
+                if profile == "litestar"
+                else "Pydantic"
+                if profile == "ninja"
+                else config["serializer_backend"]
+            )
+            lines.append(
+                f"| {profile} | {config['orm']} | {backend} | `{json.dumps(config['AIODRF'], sort_keys=True)}` |"
+            )
+        lines += [
+            "",
+            "Full parser, renderer and fastdrf settings are in `manifest.json`. SQLAlchemy uses a request-scoped AsyncSession and a worker-scoped async pool; Django uses its psycopg pool. SQL text and transaction management differ between ORMs.",
+            "",
+        ]
     database = manifest.get("database") or {}
     if database:
         lines.append(
@@ -385,7 +414,7 @@ def write_report(directory: Path) -> None:
         "## Reading this report",
         "",
         "- Every number is the median over independent server starts; *spread* is half the min–max range relative to the median.",
-        "- Configurations are `framework · server` at a worker count. One and four workers are separate results, never averaged; each worker has one dedicated CPU.",
+        "- Configurations are `framework · server` at a worker count. Worker counts are separate results, never averaged; each worker has one dedicated CPU.",
         "- *Busiest service* is the external service (PostgreSQL, Elasticsearch, MongoDB, Valkey, HTTP fixture) with the highest CPU use during the sample, relative to the CPUs it has. "
         f"At {SERVICE_BUSY:.0%} or more (⚠) the service, not the framework, may have limited throughput.",
         "- CPU % is the server process tree's mean CPU (100 % = one CPU). *Load generator* is oha's CPU use relative to the CPUs it has; at "

@@ -10,21 +10,27 @@ from bench.results import aggregate
 
 
 @pytest.mark.parametrize("workers", [1, 4])
-def test_granian_asgi_uses_explicit_runtime_and_protocol(workers):
+def test_granian_asgi_uses_uvloop_and_default_runtime_and_queues(workers):
     command = server_command("aiodrf-tuned", "127.0.0.1", 8100, workers, "granian-asgi")
     for name, value in {
         "--interface": "asgi",
         "--workers": str(workers),
-        "--runtime-mode": "mt" if workers > 1 else "st",
-        "--runtime-threads": "1",
         "--loop": "uvloop",
         "--http": "1",
-        "--backlog": "2048",
     }.items():
         assert command[command.index(name) + 1] == value
     assert "bench.asgi:application" in command
     assert "--no-access-log" in command
-    assert "auto" not in command
+    for flag in (
+        "--runtime-mode",
+        "--runtime-threads",
+        "--runtime-blocking-threads",
+        "--blocking-threads",
+        "--backlog",
+        "--backpressure",
+        "--task-impl",
+    ):
+        assert flag not in command
 
 
 @pytest.mark.parametrize("name", ["sync", "gthread", "gevent"])
@@ -42,7 +48,14 @@ def test_gunicorn_keeps_the_worker_class_explicit(name):
 def test_granian_wsgi_has_a_bounded_explicit_thread_pool():
     command = server_command("django-sync", "127.0.0.1", 8100, 1, "granian-wsgi")
     assert command[command.index("--interface") + 1] == "wsgi"
-    assert command[command.index("--blocking-threads") + 1] == "8"
+    for name, value in {
+        "--runtime-mode": "mt",
+        "--runtime-threads": "1",
+        "--blocking-threads": "4",
+        "--backpressure": "128",
+        "--backlog": "128",
+    }.items():
+        assert command[command.index(name) + 1] == value
     assert "--factory" in command
 
 
@@ -92,7 +105,7 @@ def test_every_framework_runs_on_each_server_of_its_interface():
     from bench.servers import ASGI_SERVERS, WSGI_SERVERS, server_matrix
 
     matrix = server_matrix(PROFILES, ["all"], [1, 4])
-    assert len(matrix) == len(set(matrix)) == 50
+    assert len(matrix) == len(set(matrix)) == 62
     for profile, server, _ in matrix:
         expected = {
             "asgi": ASGI_SERVERS,
@@ -251,6 +264,7 @@ def test_clean_server_log_is_accepted(tmp_path):
 
 
 def test_wsgi_workers_close_caches_synchronously(monkeypatch):
+    monkeypatch.setenv("BENCH_SERVICE_CLIENTS", "1")
     # django-valkey swaps Django's request_finished receiver for an async one,
     # which runs async_to_sync after every WSGI request and fails under gevent.
     import django_valkey.base  # noqa: F401 -- what a worker's first cache use does

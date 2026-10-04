@@ -29,7 +29,7 @@ BENCH_DATABASE=sqlite .venv/bin/pytest -q
 ```
 
 These run without services. The real-server contract tests start every
-configuration (50, or those selected with `-k`) and check every scenario
+configuration (62, or those selected with `-k`) and check every scenario
 against the services:
 
 ```sh
@@ -76,3 +76,21 @@ directory's `REPORT.md`, `summary.csv`, `samples.json` and `manifest.json`,
 with the exact command. Compare configurations measured in the same run;
 numbers from different hosts or runs are not comparable. Keep invalid samples
 in the results.
+
+## Current comparison
+
+Run the seven-profile PostgreSQL HTTP contracts on all 14 framework/server
+pairs (including concurrent JWT and pagination reads) before a measurement:
+
+```sh
+docker compose -p aiodrf-benchmarks up -d --wait postgres
+BENCH_SERVICE_CLIENTS=0 BENCH_HTTP_TESTS=1 BENCH_HTTP_MATRIX=comparison \
+  BENCH_TEST_SCENARIOS=json,json-10k,db,articles,article-detail,article-create,jwt-article,jwt-articles \
+  .venv/bin/pytest -q tests/test_http.py
+scripts/run-comparison.sh
+```
+
+The HTTP tests reset the owned benchmark database; do not run them during
+a measurement. `tests/test_sqlalchemy_store.py` checks async ORM query budgets,
+eager loading and rollback; `tests/test_comparison.py` checks the server matrix
+and compiled output serializers. See [comparison methodology](docs/comparison.md).

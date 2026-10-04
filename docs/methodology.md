@@ -1,5 +1,9 @@
 # Methodology
 
+The current [seven-profile comparison](comparison.md) uses one worker and
+PostgreSQL only. The broader legacy suite described below remains available
+for explicitly selected runs.
+
 ## A sample
 
 A sample is one framework, server, worker count and scenario, measured on a

@@ -12,7 +12,7 @@ def test_bolt_is_the_only_native_server_profile():
         if profile == "bolt":
             assert "runbolt" in command
             assert command[command.index("--processes") + 1] == "4"
-        elif profile in ("drf", "django-sync"):
+        elif profile in ("drf", "drf-fastdrf", "django-sync"):
             assert command[command.index("--interface") + 1] == "wsgi"
         else:
             assert "uvicorn" in command

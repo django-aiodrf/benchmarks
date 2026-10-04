@@ -9,8 +9,15 @@ from concurrent.futures import ThreadPoolExecutor
 import httpx
 import pytest
 
+from bench.auth import token
 from bench.processes import ROOT, server
-from bench.profiles import CORE_SCENARIOS, PATHS, PROFILES, SCENARIOS
+from bench.profiles import (
+    COMPARISON_PROFILES,
+    CORE_SCENARIOS,
+    PATHS,
+    PROFILES,
+    SCENARIOS,
+)
 from bench.servers import server_matrix
 from bench.verify import verify
 
@@ -23,7 +30,15 @@ pytestmark = [
 ]
 
 
-MATRIX = server_matrix(PROFILES, ["all"], [1, 4])
+MATRIX = (
+    server_matrix(
+        COMPARISON_PROFILES,
+        ["uvicorn", "granian-asgi", "gunicorn-gthread", "granian-wsgi"],
+        [1],
+    )
+    if os.environ.get("BENCH_HTTP_MATRIX") == "comparison"
+    else server_matrix(PROFILES, ["all"], [1, 4])
+)
 
 
 @pytest.mark.parametrize(
@@ -77,11 +92,22 @@ def check_contract(profile, workers, server_name, tmp_path, monkeypatch):
         # Compare concurrent reads with the already verified endpoint payload.
         with (
             httpx.Client(
-                base_url=f"http://127.0.0.1:{port}", timeout=15, trust_env=False
+                base_url=f"http://127.0.0.1:{port}",
+                timeout=15,
+                trust_env=False,
+                headers={"Authorization": f"Bearer {token()}"},
             ) as client,
             ThreadPoolExecutor(max_workers=16) as executor,
         ):
-            for scenario in ("json", "db", "cache-read", "http-single"):
+            for scenario in (
+                "json",
+                "db",
+                "articles",
+                "jwt-article",
+                "jwt-articles",
+                "cache-read",
+                "http-single",
+            ):
                 if scenario not in scenarios:
                     continue
                 path = PATHS[scenario]

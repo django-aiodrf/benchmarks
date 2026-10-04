@@ -40,7 +40,11 @@ serializers = build_serializers(serializer_module)
 
 # The tuned profile opts in to aiodrf's DataResponse: DRF's JSON content in
 # Django's HttpResponse, without DRF's template response.
-Response = DataResponse if settings.PROFILE == "aiodrf-tuned" else DRFResponse
+Response = (
+    DataResponse
+    if settings.PROFILE in ("aiodrf-tuned", "aiodrf-fastdrf")
+    else DRFResponse
+)
 
 
 class ServiceView(APIView):

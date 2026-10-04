@@ -5,6 +5,7 @@ import os
 import random
 import shutil
 import subprocess
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -25,6 +26,7 @@ from bench.monitor import ResourceMonitor
 from bench.processes import (
     ROOT,
     container_server,
+    environment,
     pinned,
     seed,
     server,
@@ -49,6 +51,33 @@ from bench.verify import verify
 
 def write_json(path: Path, value) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+
+
+def profile_settings(profile: str) -> dict:
+    code = """
+import json
+import django
+django.setup()
+from django.conf import settings
+from fastdrf.settings import fastdrf_settings
+print(json.dumps({
+    "REST_FRAMEWORK": settings.REST_FRAMEWORK,
+    "AIODRF": settings.AIODRF,
+    "FASTDRF": settings.FASTDRF,
+    "serializer_backend": fastdrf_settings.SERIALIZER_BACKEND,
+}))
+"""
+    result = json.loads(
+        subprocess.check_output(
+            [sys.executable, "-c", code], env=environment(profile), text=True
+        )
+    )
+    result["orm"] = (
+        "SQLAlchemy async (psycopg)"
+        if profile in ("fastapi", "litestar")
+        else "Django ORM (psycopg)"
+    )
+    return result
 
 
 def provenance(args, oha: str) -> dict:
@@ -124,6 +153,15 @@ def provenance(args, oha: str) -> dict:
         "server_environment": environment,
         "database": database,
         "pgbouncer": pooler,
+        "profile_settings": {
+            profile: profile_settings(profile) for profile in args.frameworks
+        },
+        "service_clients_enabled": os.environ.get("BENCH_SERVICE_CLIENTS", "1") == "1",
+        "sqlalchemy_pool": {
+            "pool_size": settings.BENCH_PG_POOL_MAX,
+            "max_overflow": 0,
+            "pool_timeout": 10,
+        },
         "dataset_size": int(os.environ.get("BENCH_DATASET_SIZE", "1000")),
         "oha_version": subprocess.check_output([oha, "--version"], text=True).strip(),
         "workload": {

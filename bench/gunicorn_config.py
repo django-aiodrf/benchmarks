@@ -3,5 +3,6 @@
 
 def worker_exit(server, worker):
     application = getattr(worker, "wsgi", None)
-    if application is not None:
-        application.close()
+    close = getattr(application, "close", None)
+    if close is not None:
+        close()

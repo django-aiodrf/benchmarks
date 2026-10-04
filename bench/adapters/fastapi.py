@@ -1,23 +1,16 @@
-"""FastAPI with Pydantic validation and response models, on the Django ORM."""
+"""FastAPI with Pydantic validation and response models, on SQLAlchemy async ORM."""
 
 import json
 from typing import Annotated
 
-from asgiref.sync import sync_to_async
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from bench.app.models import Article, Author
-from bench.auth import auser
-from bench.domain import (
-    InvalidReferences,
-    article_page_async,
-    article_queryset,
-    article_values,
-    create_article,
-)
+from bench import sqlalchemy_store as store
+from bench.domain import InvalidReferences
 from bench.profiles import (
     AUTH_PAGE_SIZE,
     JSON_10K_BODY,
@@ -29,7 +22,17 @@ from bench.profiles import (
 )
 from bench.services import request_resources
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(
+    docs_url=None, redoc_url=None, openapi_url=None, lifespan=store.database_lifespan
+)
+
+
+async def session_dependency(request: Request):
+    async with request.app.state.sessions() as session:
+        yield session
+
+
+Session = Annotated[AsyncSession, Depends(session_dependency)]
 
 
 class Message(BaseModel):
@@ -87,38 +90,34 @@ async def large_json_view():
 
 
 @app.get("/db", response_model=list[NamedObject])
-async def database_view():
-    return [
-        {"id": row.id, "name": row.name}
-        async for row in Author.objects.order_by("id")[:10]
-    ]
+async def database_view(session: Session):
+    return [{"id": row.id, "name": row.name} for row in await store.authors(session)]
 
 
 @app.get("/articles", response_model=ArticlePage)
-async def articles_view():
-    page = await article_page_async()
+async def articles_view(session: Session):
+    page = await store.page(session)
     return {
         "total": page["total"],
-        "items": [article_values(row) for row in page["items"]],
+        "items": [store.article_values(row) for row in page["items"]],
     }
 
 
 @app.post("/articles", response_model=ArticleOutput, status_code=201)
-async def create_view(data: ArticleInput):
+async def create_view(data: ArticleInput, session: Session):
     try:
-        article = await sync_to_async(create_article)(data.model_dump())
+        article = await store.create_article(session, data.model_dump())
     except InvalidReferences as exc:
         raise HTTPException(400, str(exc)) from exc
-    return article_values(article)
+    return store.article_values(article)
 
 
 @app.get("/articles/{pk}", response_model=ArticleOutput)
-async def article_view(pk: int):
-    try:
-        article = await article_queryset().aget(pk=pk)
-    except Article.DoesNotExist as exc:
-        raise HTTPException(404, "Article not found") from exc
-    return article_values(article)
+async def article_view(pk: int, session: Session):
+    article = await store.article(session, pk)
+    if article is None:
+        raise HTTPException(404, "Article not found")
+    return store.article_values(article)
 
 
 @app.get("/workloads/{scenario}")
@@ -166,8 +165,13 @@ bearer = HTTPBearer(auto_error=False)
 
 async def current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+    session: Session,
 ):
-    user = await auser(credentials.credentials) if credentials else None
+    user = (
+        await store.authenticated_user(session, credentials.credentials)
+        if credentials
+        else None
+    )
     if user is None:
         raise HTTPException(
             401, "Not authenticated", headers={"WWW-Authenticate": "Bearer"}
@@ -177,23 +181,23 @@ async def current_user(
 
 @app.get("/auth/articles", response_model=AuthenticatedPage)
 async def authenticated_articles(
-    user: Annotated[object, Depends(current_user)], page: int = 1
+    user: Annotated[object, Depends(current_user)], session: Session, page: int = 1
 ):
-    offset = (page - 1) * AUTH_PAGE_SIZE
-    count = await Article.objects.acount()
-    items = [row async for row in article_queryset()[offset : offset + AUTH_PAGE_SIZE]]
-    return {"count": count, "items": [article_values(row) for row in items]}
+    result = await store.page(session, page, AUTH_PAGE_SIZE)
+    return {
+        "count": result["total"],
+        "items": [store.article_values(row) for row in result["items"]],
+    }
 
 
 @app.get("/auth/articles/{pk}", response_model=AuthenticatedArticle)
 async def authenticated_article(
-    pk: int, user: Annotated[object, Depends(current_user)]
+    pk: int, user: Annotated[object, Depends(current_user)], session: Session
 ):
-    try:
-        article = await article_queryset().aget(pk=pk)
-    except Article.DoesNotExist as exc:
-        raise HTTPException(404, "Article not found") from exc
+    article = await store.article(session, pk)
+    if article is None:
+        raise HTTPException(404, "Article not found")
     return {
         "user": {"id": user.id, "username": user.username},
-        "article": article_values(article),
+        "article": store.article_values(article),
     }

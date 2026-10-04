@@ -1,5 +1,9 @@
 # Configuration
 
+For the published seven-profile, one-worker PostgreSQL selection, run
+`scripts/run-comparison.sh`; see [comparison methodology](comparison.md).
+The CLI defaults below retain the broader suite.
+
 ## Commands
 
 ```sh
@@ -25,7 +29,7 @@ report's *Corrections* section.
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `--frameworks` | all ten | Profiles to measure |
+| `--frameworks` | all twelve | Profiles to measure |
 | `--servers` | `all` | `all`: every server each framework supports; `default`: its first one; or server names |
 | `--workers` | `1 4` | Worker counts, each a separate group |
 | `--scenarios` | all 35 | Workloads |

@@ -36,6 +36,9 @@ INSTALLED_APPS = [
 ]
 if PROFILE.startswith("aiodrf"):
     INSTALLED_APPS += ["rest_framework", "aiodrf"]
+    # MongoDB is written through the ORM (bench/workloads.py), never through
+    # an aiodrf serializer's save, so ATOMIC_SAVE does not apply to it.
+    SILENCED_SYSTEM_CHECKS = ["aiodrf.W007"]
 if PROFILE == "bolt":
     INSTALLED_APPS += ["django_bolt"]
     BOLT_API = ["bench.adapters.bolt:api"]
@@ -164,18 +167,30 @@ REST_FRAMEWORK = {
     "COERCE_BIGINT_TO_STRING": False,
 }
 AIODRF = {}
-if PROFILE == "aiodrf-tuned":
-    AIODRF = {
+FASTDRF = {}
+if PROFILE in ("aiodrf-tuned", "aiodrf-fastdrf", "drf-fastdrf"):
+    # django-fastdrf's serializer settings, which aiodrf builds on.
+    FASTDRF = {
         "SERIALIZER_BACKEND": "msgspec",
         "SERIALIZER_BACKEND_PARITY": "strict",
-        "SERIALIZER_BACKEND_FALLBACK": "error",
+        "SERIALIZER_BACKEND_FALLBACK": "drf",
+        "DELEGATE_FIELDS": True,
         "CACHE_SERIALIZER_FIELDS": True,
         "FIELD_COPY_MODE": "compiled",
+    }
+    AIODRF = {
         # These serializers read only already-loaded model fields and relations.
         "REPRESENTATION_MODE": "inline",
         # Keep request threads for later requests (aiodrf.asgi).
         "REQUEST_THREADS": 32,
     }
     REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
-        "aiodrf.contrib.msgspec.renderers.MsgspecJSONRenderer"
+        "fastdrf.msgspec.renderers.MsgspecJSONRenderer"
     ]
+
+    REST_FRAMEWORK["DEFAULT_PARSER_CLASSES"] = [
+        "fastdrf.msgspec.parsers.MsgspecJSONParser"
+    ]
+    if PROFILE == "drf-fastdrf":
+        AIODRF = {}
+    INSTALLED_APPS += ["fastdrf"]
